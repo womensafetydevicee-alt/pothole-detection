@@ -1,82 +1,31 @@
-// ============================================================
-// HIVEMQ CONFIGURATION
-// ============================================================
-
 const MQTT_HOST =
     "wss://9e3ed49b452c4e20bf321f93db6bb743.s1.eu.hivemq.cloud:8884/mqtt";
 
+const MQTT_USERNAME = "pothole1";
+const MQTT_PASSWORD = "12345678";
 
-const MQTT_USERNAME =
-    "pothole1";
-
-
-const MQTT_PASSWORD =
-    "12345678";
-
-
-// ============================================================
-// MQTT TOPICS
-// ============================================================
-
-const DEVICE_TOPIC =
-    "pothole/device";
-
-
-const POTHOLE_TOPIC =
-    "pothole/detections";
+const DEVICE_TOPIC = "pothole/device";
+const POTHOLE_TOPIC = "pothole/detections";
 
 
 // ============================================================
 // MAP
 // ============================================================
 
-let map = null;
+const DEFAULT_LATITUDE = 10.891968;
+const DEFAULT_LONGITUDE = 78.725787;
 
-let potholeMarkers = {};
-
-let bikeMarker = null;
-
-let potholeCount = 0;
-
-let mapCentered = false;
-
-
-// Default location
-
-const DEFAULT_LATITUDE =
-    10.891968;
-
-const DEFAULT_LONGITUDE =
-    78.725787;
-
-
-map = L.map(
-    "map"
-).setView(
-
-    [
-        DEFAULT_LATITUDE,
-        DEFAULT_LONGITUDE
-    ],
-
-    16
-
+const map = L.map("map").setView(
+    [DEFAULT_LATITUDE, DEFAULT_LONGITUDE],
+    17
 );
 
-
 L.tileLayer(
-
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-
     {
-
         maxZoom: 20,
-
-        attribution:
-            "© OpenStreetMap contributors"
-
+        attribution: "© OpenStreetMap contributors"
     }
-
 ).addTo(map);
 
 
@@ -84,151 +33,110 @@ L.tileLayer(
 // BIKE ICON
 // ============================================================
 
-const bikeIcon =
-    L.divIcon({
+const bikeIcon = L.divIcon({
 
-        className: "",
+    className: "",
 
-        html:
-            '<div style="' +
-            'width:32px;' +
-            'height:32px;' +
-            'background:#1976d2;' +
-            'border:3px solid white;' +
-            'border-radius:50%;' +
-            'box-shadow:0 2px 8px rgba(0,0,0,0.5);' +
-            'display:flex;' +
-            'align-items:center;' +
-            'justify-content:center;' +
-            'color:white;' +
-            'font-size:18px;' +
-            'font-weight:bold;' +
-            '">B</div>',
+    html:
+        '<div style="' +
+        'width:30px;' +
+        'height:30px;' +
+        'background:#1976d2;' +
+        'border:3px solid white;' +
+        'border-radius:50%;' +
+        'display:flex;' +
+        'align-items:center;' +
+        'justify-content:center;' +
+        'color:white;' +
+        'font-weight:bold;' +
+        'box-shadow:0 2px 8px rgba(0,0,0,.5);' +
+        '">B</div>',
 
-        iconSize: [
-            38,
-            38
-        ],
+    iconSize: [36, 36],
+    iconAnchor: [18, 18]
 
-        iconAnchor: [
-            19,
-            19
-        ]
-
-    });
+});
 
 
 // ============================================================
-// RED POTHOLE ICON
+// VARIABLES
 // ============================================================
 
-const potholeIcon =
-    L.divIcon({
+let bikeMarker = null;
 
-        className: "",
+let mapCentered = false;
 
-        html:
-            '<div style="' +
-            'width:18px;' +
-            'height:18px;' +
-            'background:red;' +
-            'border:3px solid white;' +
-            'border-radius:50%;' +
-            'box-shadow:0 2px 8px rgba(0,0,0,0.6);' +
-            '"></div>',
+let potholeMarkers = {};
 
-        iconSize: [
-            24,
-            24
-        ],
-
-        iconAnchor: [
-            12,
-            12
-        ]
-
-    });
+let potholeCount = 0;
 
 
 // ============================================================
-// MQTT CONNECTION
+// MQTT
 // ============================================================
 
-console.log(
-    "Connecting to HiveMQ..."
+console.log("Connecting to MQTT...");
+
+const mqttClient = mqtt.connect(
+    MQTT_HOST,
+    {
+        username: MQTT_USERNAME,
+        password: MQTT_PASSWORD,
+
+        clean: true,
+
+        reconnectPeriod: 3000,
+
+        connectTimeout: 10000,
+
+        keepalive: 60
+    }
 );
 
 
-const mqttClient =
-    mqtt.connect(
-
-        MQTT_HOST,
-
-        {
-
-            username:
-                MQTT_USERNAME,
-
-            password:
-                MQTT_PASSWORD,
-
-            clean: true,
-
-            reconnectPeriod: 3000,
-
-            connectTimeout: 10000,
-
-            keepalive: 60
-
-        }
-
-    );
-
-
 // ============================================================
-// MQTT CONNECTED
+// MQTT CONNECT
 // ============================================================
 
 mqttClient.on(
-
     "connect",
-
     function()
     {
 
         console.log(
-            "MQTT connected"
+            "================================"
+        );
+
+        console.log(
+            "MQTT CONNECTED"
+        );
+
+        console.log(
+            "================================"
         );
 
 
-        const status =
-            document.getElementById(
-                "connection"
-            );
+        setText(
+            "connection",
+            "CONNECTED"
+        );
 
 
-        if (status)
-        {
-
-            status.innerText =
-                "CONNECTED";
-
-            status.style.color =
-                "green";
-
-        }
+        setColor(
+            "connection",
+            "green"
+        );
 
 
-        // Subscribe to bike position
+        console.log(
+            "Subscribing to:",
+            DEVICE_TOPIC
+        );
+
 
         mqttClient.subscribe(
-
             DEVICE_TOPIC,
-
-            {
-                qos: 1
-            },
-
+            { qos: 1 },
             function(error)
             {
 
@@ -236,7 +144,7 @@ mqttClient.on(
                 {
 
                     console.error(
-                        "Device subscribe error:",
+                        "DEVICE subscribe ERROR:",
                         error
                     );
 
@@ -245,27 +153,25 @@ mqttClient.on(
                 {
 
                     console.log(
-                        "Subscribed:",
+                        "DEVICE TOPIC SUBSCRIBED:",
                         DEVICE_TOPIC
                     );
 
                 }
 
             }
-
         );
 
 
-        // Subscribe to potholes
+        console.log(
+            "Subscribing to:",
+            POTHOLE_TOPIC
+        );
+
 
         mqttClient.subscribe(
-
             POTHOLE_TOPIC,
-
-            {
-                qos: 1
-            },
-
+            { qos: 1 },
             function(error)
             {
 
@@ -273,7 +179,7 @@ mqttClient.on(
                 {
 
                     console.error(
-                        "Pothole subscribe error:",
+                        "POTHOLE subscribe ERROR:",
                         error
                     );
 
@@ -282,77 +188,16 @@ mqttClient.on(
                 {
 
                     console.log(
-                        "Subscribed:",
+                        "POTHOLE TOPIC SUBSCRIBED:",
                         POTHOLE_TOPIC
                     );
 
                 }
 
             }
-
         );
 
     }
-
-);
-
-
-// ============================================================
-// MQTT DISCONNECTED
-// ============================================================
-
-mqttClient.on(
-
-    "close",
-
-    function()
-    {
-
-        console.log(
-            "MQTT disconnected"
-        );
-
-
-        const status =
-            document.getElementById(
-                "connection"
-            );
-
-
-        if (status)
-        {
-
-            status.innerText =
-                "DISCONNECTED";
-
-            status.style.color =
-                "red";
-
-        }
-
-    }
-
-);
-
-
-// ============================================================
-// MQTT ERROR
-// ============================================================
-
-mqttClient.on(
-
-    "error",
-
-    function(error)
-    {
-
-        console.error(
-            "MQTT error:",
-            error
-        );
-
-    }
-
 );
 
 
@@ -361,133 +206,165 @@ mqttClient.on(
 // ============================================================
 
 mqttClient.on(
-
     "message",
-
-    function(
-
-        topic,
-
-        message
-
-    )
+    function(topic, message)
     {
+
+        const text =
+            message.toString();
+
+
+        console.log(
+            "MQTT MESSAGE RECEIVED"
+        );
+
+        console.log(
+            "TOPIC:",
+            topic
+        );
+
+        console.log(
+            "MESSAGE:",
+            text
+        );
+
+
+        let data;
+
 
         try
         {
 
-            const data =
-                JSON.parse(
-
-                    message.toString()
-
-                );
-
-
-            console.log(
-
-                "MQTT:",
-
-                topic,
-
-                data
-
-            );
-
-
-            // ------------------------------------------------
-            // BIKE POSITION
-            // ------------------------------------------------
-
-            if (
-
-                topic ===
-                DEVICE_TOPIC
-
-            )
-            {
-
-                updateBike(
-                    data
-                );
-
-            }
-
-
-            // ------------------------------------------------
-            // POTHOLE
-            // ------------------------------------------------
-
-            else if (
-
-                topic ===
-                POTHOLE_TOPIC
-
-            )
-            {
-
-                addPothole(
-                    data
-                );
-
-            }
+            data = JSON.parse(text);
 
         }
-
         catch(error)
         {
 
             console.error(
-
-                "Invalid MQTT JSON:",
-
+                "JSON ERROR:",
                 error
-
             );
+
+            return;
+
+        }
+
+
+        // ----------------------------------------------------
+        // BIKE
+        // ----------------------------------------------------
+
+        if (
+            topic === DEVICE_TOPIC
+        )
+        {
+
+            console.log(
+                "BIKE GPS MESSAGE"
+            );
+
+            updateBike(data);
+
+        }
+
+
+        // ----------------------------------------------------
+        // POTHOLE
+        // ----------------------------------------------------
+
+        else if (
+            topic === POTHOLE_TOPIC
+        )
+        {
+
+            console.log(
+                "POTHOLE MESSAGE"
+            );
+
+            addPothole(data);
 
         }
 
     }
-
 );
 
 
 // ============================================================
-// UPDATE BIKE POSITION
+// MQTT ERROR
+// ============================================================
+
+mqttClient.on(
+    "error",
+    function(error)
+    {
+
+        console.error(
+            "MQTT ERROR:",
+            error
+        );
+
+    }
+);
+
+
+// ============================================================
+// MQTT CLOSE
+// ============================================================
+
+mqttClient.on(
+    "close",
+    function()
+    {
+
+        console.log(
+            "MQTT CONNECTION CLOSED"
+        );
+
+
+        setText(
+            "connection",
+            "DISCONNECTED"
+        );
+
+
+        setColor(
+            "connection",
+            "red"
+        );
+
+    }
+);
+
+
+// ============================================================
+// UPDATE BIKE
 // ============================================================
 
 function updateBike(data)
 {
 
-    const latitude =
-        Number(
-            data.latitude
-        );
+    console.log(
+        "Updating bike:",
+        data
+    );
 
+
+    const latitude =
+        Number(data.latitude);
 
     const longitude =
-        Number(
-            data.longitude
-        );
+        Number(data.longitude);
 
 
     if (
-
-        !Number.isFinite(
-            latitude
-        )
-
-        ||
-
-        !Number.isFinite(
-            longitude
-        )
-
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
     )
     {
 
-        console.warn(
-            "Invalid GPS position:",
+        console.error(
+            "Invalid GPS:",
             data
         );
 
@@ -496,17 +373,21 @@ function updateBike(data)
     }
 
 
-    const position = [
-
+    console.log(
+        "GPS:",
         latitude,
-
         longitude
+    );
 
+
+    const position = [
+        latitude,
+        longitude
     ];
 
 
     // --------------------------------------------------------
-    // CREATE BIKE MARKER
+    // CREATE MARKER
     // --------------------------------------------------------
 
     if (
@@ -514,41 +395,34 @@ function updateBike(data)
     )
     {
 
+        console.log(
+            "Creating bike marker"
+        );
+
+
         bikeMarker =
             L.marker(
-
                 position,
-
                 {
-                    icon:
-                        bikeIcon
+                    icon: bikeIcon
                 }
-
             ).addTo(map);
 
 
         bikeMarker.bindPopup(
-
             "<b>BIKE_01</b><br>" +
-
-            "Live GPS position<br><br>" +
-
-            "Latitude: " +
-            latitude.toFixed(6) +
-
-            "<br>" +
-
-            "Longitude: " +
-            longitude.toFixed(6)
-
+            "Live position"
         );
 
-    }
 
+    }
     else
     {
 
-        // Move existing marker
+        console.log(
+            "Moving bike marker"
+        );
+
 
         bikeMarker.setLatLng(
             position
@@ -561,68 +435,32 @@ function updateBike(data)
     // UPDATE DASHBOARD
     // --------------------------------------------------------
 
-    const latElement =
-        document.getElementById(
-            "latitude"
-        );
+    setText(
+        "latitude",
+        latitude.toFixed(6)
+    );
 
 
-    const lonElement =
-        document.getElementById(
-            "longitude"
-        );
+    setText(
+        "longitude",
+        longitude.toFixed(6)
+    );
 
 
-    const satellitesElement =
-        document.getElementById(
-            "satellites"
-        );
+    setText(
+        "satellites",
+        data.satellites ?? "--"
+    );
 
 
-    const hdopElement =
-        document.getElementById(
-            "hdop"
-        );
-
-
-    if (latElement)
-    {
-
-        latElement.innerText =
-            latitude.toFixed(6);
-
-    }
-
-
-    if (lonElement)
-    {
-
-        lonElement.innerText =
-            longitude.toFixed(6);
-
-    }
-
-
-    if (satellitesElement)
-    {
-
-        satellitesElement.innerText =
-            data.satellites ?? "--";
-
-    }
-
-
-    if (hdopElement)
-    {
-
-        hdopElement.innerText =
-            data.hdop ?? "--";
-
-    }
+    setText(
+        "hdop",
+        data.hdop ?? "--"
+    );
 
 
     // --------------------------------------------------------
-    // CENTER MAP ONLY FIRST TIME
+    // CENTER MAP FIRST TIME
     // --------------------------------------------------------
 
     if (
@@ -630,13 +468,16 @@ function updateBike(data)
     )
     {
 
-        map.setView(
-
-            position,
-
-            18
-
+        console.log(
+            "Centering map on bike"
         );
+
+
+        map.setView(
+            position,
+            18
+        );
+
 
         mapCentered = true;
 
@@ -652,51 +493,16 @@ function updateBike(data)
 function addPothole(data)
 {
 
-    if (
-
-        data.latitude === undefined
-
-        ||
-
-        data.longitude === undefined
-
-    )
-    {
-
-        console.warn(
-            "Pothole has no GPS:",
-            data
-        );
-
-        return;
-
-    }
-
-
     const latitude =
-        Number(
-            data.latitude
-        );
-
+        Number(data.latitude);
 
     const longitude =
-        Number(
-            data.longitude
-        );
+        Number(data.longitude);
 
 
     if (
-
-        !Number.isFinite(
-            latitude
-        )
-
-        ||
-
-        !Number.isFinite(
-            longitude
-        )
-
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
     )
     {
 
@@ -706,61 +512,52 @@ function addPothole(data)
 
 
     const id =
-        String(
-            data.id
-        );
+        String(data.id);
 
-
-    // --------------------------------------------------------
-    // DUPLICATE CHECK
-    // --------------------------------------------------------
 
     if (
         potholeMarkers[id]
     )
     {
 
-        console.log(
-
-            "Duplicate pothole ignored:",
-
-            id
-
-        );
-
         return;
 
     }
 
 
-    // --------------------------------------------------------
-    // CREATE RED MARKER
-    // --------------------------------------------------------
+    const icon =
+        L.divIcon({
+
+            className: "",
+
+            html:
+                '<div style="' +
+                'width:18px;' +
+                'height:18px;' +
+                'background:red;' +
+                'border:3px solid white;' +
+                'border-radius:50%;' +
+                'box-shadow:0 2px 8px rgba(0,0,0,.6);' +
+                '"></div>',
+
+            iconSize: [24, 24],
+
+            iconAnchor: [12, 12]
+
+        });
+
 
     const marker =
         L.marker(
-
             [
-
                 latitude,
-
                 longitude
-
             ],
-
             {
-
-                icon:
-                    potholeIcon
-
+                icon: icon
             }
-
         ).addTo(map);
 
-
-    // --------------------------------------------------------
-    // POPUP
-    // --------------------------------------------------------
 
     marker.bindPopup(
 
@@ -768,45 +565,19 @@ function addPothole(data)
         id +
         "</b><br><br>" +
 
-        "Device: " +
-
-        (
-            data.device_id
-            ||
-            "Unknown"
-        ) +
-
-        "<br>" +
-
         "Latitude: " +
-
         latitude.toFixed(6) +
 
         "<br>" +
 
         "Longitude: " +
-
         longitude.toFixed(6) +
 
         "<br>" +
 
         "Confidence: " +
-
-        (
-            data.confidence
-            ??
-            "--"
-        ) +
-
-        "%<br>" +
-
-        "Time: " +
-
-        (
-            data.timestamp
-            ||
-            "--"
-        )
+        (data.confidence ?? "--") +
+        "%"
 
     );
 
@@ -818,52 +589,58 @@ function addPothole(data)
     potholeCount++;
 
 
-    // --------------------------------------------------------
-    // UPDATE COUNT
-    // --------------------------------------------------------
+    setText(
+        "count",
+        potholeCount
+    );
 
-    const countElement =
-        document.getElementById(
-            "count"
-        );
+}
 
 
-    if (countElement)
+// ============================================================
+// HELPER FUNCTIONS
+// ============================================================
+
+function setText(id, value)
+{
+
+    const element =
+        document.getElementById(id);
+
+
+    if (element)
     {
 
-        countElement.innerText =
-            potholeCount;
+        element.innerText =
+            value;
+
+    }
+    else
+    {
+
+        console.warn(
+            "HTML element missing:",
+            id
+        );
 
     }
 
-
-    console.log(
-
-        "Pothole added:",
-
-        id,
-
-        latitude,
-
-        longitude
-
-    );
+}
 
 
-    // --------------------------------------------------------
-    // DON'T MOVE THE MAP
-    // --------------------------------------------------------
-    //
-    // Important:
-    //
-    // The bike should remain visible.
-    //
-    // Therefore we do NOT use:
-    //
-    // map.setView(...)
-    //
-    // here.
-    //
-    // --------------------------------------------------------
+function setColor(id, color)
+{
+
+    const element =
+        document.getElementById(id);
+
+
+    if (element)
+    {
+
+        element.style.color =
+            color;
+
+    }
 
 }
