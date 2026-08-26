@@ -9,15 +9,15 @@
 // wss://xxxxxxxx.s1.eu.hivemq.cloud:8884/mqtt
 
 const MQTT_HOST =
-    "wss://YOUR_CLUSTER_URL:8884/mqtt";
+    "9e3ed49b452c4e20bf321f93db6bb743.s1.eu.hivemq.cloud";
 
 
 const MQTT_USERNAME =
-    "YOUR_USERNAME";
+    "pothole";
 
 
 const MQTT_PASSWORD =
-    "YOUR_PASSWORD";
+    "YnB}GYV"!6Lp&#&";
 
 
 const MQTT_TOPIC =
