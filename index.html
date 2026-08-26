@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
+
+<title>Live Pothole Map</title>
+
+
+<link
+rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+
+<style>
+
+html,
+body {
+
+    margin: 0;
+
+    padding: 0;
+
+    width: 100%;
+
+    height: 100%;
+
+    font-family: Arial, sans-serif;
+
+}
+
+
+#map {
+
+    width: 100%;
+
+    height: 100%;
+
+}
+
+
+#dashboard {
+
+    position: absolute;
+
+    z-index: 1000;
+
+    top: 15px;
+
+    left: 15px;
+
+    background: white;
+
+    padding: 15px;
+
+    border-radius: 10px;
+
+    box-shadow:
+        0 2px 10px
+        rgba(0,0,0,0.3);
+
+    min-width: 260px;
+
+}
+
+
+.title {
+
+    font-size: 19px;
+
+    font-weight: bold;
+
+    margin-bottom: 10px;
+
+}
+
+
+.row {
+
+    margin-top: 6px;
+
+    font-size: 14px;
+
+}
+
+
+#connection {
+
+    font-weight: bold;
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div id="dashboard">
+
+<div class="title">
+Live Pothole Map
+</div>
+
+
+<div class="row">
+
+MQTT:
+
+<span id="connection">
+Connecting...
+</span>
+
+</div>
+
+
+<div class="row">
+
+Potholes:
+
+<span id="count">
+0
+</span>
+
+</div>
+
+
+<div class="row">
+
+Last latitude:
+
+<span id="latitude">
+--
+</span>
+
+</div>
+
+
+<div class="row">
+
+Last longitude:
+
+<span id="longitude">
+--
+</span>
+
+</div>
+
+
+</div>
+
+
+<div id="map"></div>
+
+
+<script
+src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<script
+src="https://unpkg.com/mqtt/dist/mqtt.min.js">
+</script>
+
+
+<script src="app.js"></script>
+
+
+</body>
+
+</html>
