@@ -13,11 +13,11 @@ const MQTT_HOST =
 
 
 const MQTT_USERNAME =
-    "pothole";
+    "pothole1";
 
 
 const MQTT_PASSWORD =
-    "YnB}GYV"!6Lp&#&";
+    "12345678";
 
 
 const MQTT_TOPIC =
