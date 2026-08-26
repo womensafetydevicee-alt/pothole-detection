@@ -9,7 +9,7 @@
 // wss://xxxxxxxx.s1.eu.hivemq.cloud:8884/mqtt
 
 const MQTT_HOST =
-    "ws://9e3ed49b452c4e20bf321f93db6bb743.s1.eu.hivemq.cloud:8884/mqtt";
+    "wss://9e3ed49b452c4e20bf321f93db6bb743.s1.eu.hivemq.cloud:8884/mqtt";
 
 
 const MQTT_USERNAME =
